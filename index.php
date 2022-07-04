@@ -9,7 +9,7 @@ if ($_SERVER["HTTP_HOST"] === "localhost") {
 }
 $files = _readDir($root);
 $files = array_values(array_filter($files, function ($x) use ($root) {
-  return is_dir($root . "/" . $x) && $x !== "master";
+  return is_dir($root . "/" . $x) && $x !== "master" && $x !== ".git";
 }));
 
 ?>
