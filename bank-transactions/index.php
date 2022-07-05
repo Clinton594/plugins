@@ -25,22 +25,42 @@ if (isset($_POST['submit'])) {
   if (!empty($response->status)) {
     if ($xlsx = SimpleXLSX::parse($response->data)) {
       $rows = $xlsx->rows();
-      unset($rows[17]);
+      $lastcol = count($rows[0]);
       foreach ($rows as $key => $row) {
         $selectedCol = strtolower($row[$col]);
         if (!empty($selectedCol)) {
+          // From and to
           if (strpos($selectedCol, " from ") !== false && strpos($selectedCol, " to ") !== false) {
             preg_match('/ from (.*?) to/', $selectedCol, $result);
             if (!empty($result[1])) {
-              $rows[$key][$col + 1] = ucwords($result[1]);
+              $rows[$key][$lastcol] = ucwords($result[1]);
             }
-          } else if (strpos($selectedCol, "frm ") !== false && strpos($selectedCol, " to ") !== false) {
+          }
+          // frm and to
+          else if (strpos($selectedCol, "frm ") !== false && strpos($selectedCol, " to ") !== false) {
             preg_match('/frm (.*?) to/', $selectedCol, $result);
             if (!empty($result[1])) {
-              $rows[$key][$col + 1] = ucwords($result[1]);
+              $rows[$key][$lastcol] = ucwords($result[1]);
             }
+          }
+          // Starts with a 0
+          else if (strpos($selectedCol, "0 ") === 0) {
+            $excludes = ["ref", "policy", "no", "mbanking", "via", "gtworld", "-", "and"];
+            $selectedCol = str_replace("0 ", "", $selectedCol);
+            $splitted = explode(" ", $selectedCol);
+            $offset = 0;
+            if (preg_match('~[0-9]+~', $splitted[0])) $offset = 1;
+            // preg_match('~[0-9]+~', $string)
+            $names = array_range($splitted, 3, $offset);
+            $names = array_filter($names, function ($name) {
+              return !empty($name);
+            });
+            $names = array_filter($names, function ($name) use ($excludes) {
+              return (!preg_match('~[0-9]+~', $name) && !in_array($name, $excludes));
+            });
+            $rows[$key][$lastcol] = ucwords(implode(" ", $names));
           } else {
-            $rows[$key][$col + 1] = ucwords(getBetween($selectedCol));
+            $rows[$key][$lastcol] = ucwords(getBetween($selectedCol));
           }
         }
       }
@@ -135,7 +155,7 @@ function getBetween($string)
                 <div class="form-group">
                   <select name="colnum" required class="form-control">
                     <option value="" selected disabled>Choose the column number</option>
-                    <?php for ($i = 0; $i < 10; $i++) { ?>
+                    <?php for ($i = 0; $i < 20; $i++) { ?>
                       <option value="<?= $i ?>"><?= $i + 1 ?></option>
                     <?php } ?>
                   </select>

@@ -74,7 +74,7 @@ function array_range($array = array(), $range = 1, $offset = 0)
   $array = (array)$array;
   $range = $range === 1 ? count($array) : $range;
   foreach ($array as $key => $value) {
-    if ($count >= $offset && $count <= $range) {
+    if ($count >= $offset && $count <= ($range + $offset)) {
       $result[$key] = $value;
     }
     $count++;
